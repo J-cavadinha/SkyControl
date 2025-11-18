@@ -1,0 +1,12 @@
+com\skycontrol\dronebackend\simulator\SimulatedDrone$State.class
+com\skycontrol\dronebackend\service\SimulationService.class
+com\skycontrol\dronebackend\model\Alert.class
+com\skycontrol\dronebackend\events\InternalEventPublisher$Event.class
+com\skycontrol\dronebackend\DroneSimulatorApplication.class
+com\skycontrol\dronebackend\model\DroneTelemetry.class
+com\skycontrol\dronebackend\simulator\SimulatedDrone.class
+com\skycontrol\dronebackend\events\InternalEventBus.class
+com\skycontrol\dronebackend\events\InternalEventPublisher.class
+com\skycontrol\dronebackend\model\Drone.class
+com\skycontrol\dronebackend\events\EventPublisher.class
+com\skycontrol\dronebackend\config\RabbitMQConfig.class

@@ -1,0 +1,78 @@
+[ {
+  "droneId" : 1,
+  "lat" : -22.901,
+  "lng" : -43.199,
+  "altitude" : 113.6853168070634,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 7,
+  "lat" : -22.901,
+  "lng" : -43.205,
+  "altitude" : 103.70879877551495,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 3,
+  "lat" : -22.901,
+  "lng" : -43.201,
+  "altitude" : 117.68665222732565,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 9,
+  "lat" : -22.901,
+  "lng" : -43.207,
+  "altitude" : 119.79244677077719,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 6,
+  "lat" : -22.901,
+  "lng" : -43.193,
+  "altitude" : 113.65789524649024,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 10,
+  "lat" : -22.901,
+  "lng" : -43.189,
+  "altitude" : 105.59622120155667,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 4,
+  "lat" : -22.901,
+  "lng" : -43.195,
+  "altitude" : 108.41617349817257,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 2,
+  "lat" : -22.901,
+  "lng" : -43.196999999999996,
+  "altitude" : 102.86441278670284,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 5,
+  "lat" : -22.901,
+  "lng" : -43.202999999999996,
+  "altitude" : 119.5965887391815,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 8,
+  "lat" : -22.901,
+  "lng" : -43.190999999999995,
+  "altitude" : 110.86972492529945,
+  "speed" : 0.0,
+  "battery" : 30
+}, {
+  "droneId" : 11,
+  "lat" : -22.901,
+  "lng" : -43.208999999999996,
+  "altitude" : 103.347172172461,
+  "speed" : 0.0,
+  "battery" : 50
+} ]

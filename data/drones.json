@@ -1,0 +1,56 @@
+[ {
+  "id" : 1,
+  "name" : "SkyMaster",
+  "model" : "X500",
+  "active" : true
+}, {
+  "id" : 2,
+  "name" : "AeroHawk",
+  "model" : "X300",
+  "active" : true
+}, {
+  "id" : 3,
+  "name" : "FalconEye",
+  "model" : "Z90",
+  "active" : true
+}, {
+  "id" : 4,
+  "name" : "StormRider",
+  "model" : "V2-Pro",
+  "active" : true
+}, {
+  "id" : 5,
+  "name" : "SkyHornet",
+  "model" : "HX22",
+  "active" : true
+}, {
+  "id" : 6,
+  "name" : "RavenAir",
+  "model" : "Q77",
+  "active" : true
+}, {
+  "id" : 7,
+  "name" : "EagleForce",
+  "model" : "A15",
+  "active" : true
+}, {
+  "id" : 8,
+  "name" : "ThunderWing",
+  "model" : "K4",
+  "active" : true
+}, {
+  "id" : 9,
+  "name" : "NightFlyer",
+  "model" : "NF-01",
+  "active" : true
+}, {
+  "id" : 10,
+  "name" : "BladeRunner",
+  "model" : "BRX",
+  "active" : true
+}, {
+  "id" : 11,
+  "name" : "teste ",
+  "model" : "teste",
+  "active" : true
+} ]

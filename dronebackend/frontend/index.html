@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyControl - Painel Tático</title>
+    <style>
+        /* --- ESTILOS GERAIS --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; color: #1f2937; margin: 0; padding: 20px; }
+        .container { display: grid; grid-template-columns: 350px 1fr; gap: 20px; max-width: 1600px; margin: 0 auto; height: 90vh; }
+        
+        .card { background: #fff; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column; }
+        .card h2 { margin-top: 0; font-size: 1.2rem; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px; }
+        
+        .left-column { display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+        .right-column { display: flex; flex-direction: column; gap: 20px; }
+        
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; border: none; border-radius: 6px; background-color: #3b82f6; color: white; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button:hover { background-color: #2563eb; }
+        
+        .formation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-formation { background-color: #8b5cf6; font-size: 0.8rem; }
+        .btn-formation:hover { background-color: #7c3aed; }
+        .btn-rtl { background-color: #f59e0b; grid-column: span 2; } 
+
+        #drone-list { list-style: none; padding: 0; margin: 0; }
+        .drone-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f3f4f6; }
+        .btn-delete { background-color: #ef4444; width: auto; padding: 5px 10px; font-size: 0.8rem; }
+
+        #alert-list { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
+        .alert-item { padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; border-left: 4px solid transparent; background: #f9fafb; }
+        .alert-item[data-type="LOW_BATTERY"] { border-left-color: #f59e0b; background-color: #fffbeb; }
+        .alert-item[data-type="EMERGENCY_SIGNAL"] { border-left-color: #ef4444; background-color: #fef2f2; }
+        .btn-resume { background-color: #10b981; margin-top: 5px; font-size: 0.8rem; }
+
+        /* --- MAPA --- */
+        #map-wrapper { flex-grow: 1; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #d1d5db; background: #e5e7eb; }
+        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+        
+        .map-overlay { position: absolute; bottom: 15px; right: 15px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 8px; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); pointer-events: none; }
+        
+        #telemetry-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; max-height: 150px; overflow-y: auto; }
+        .tel-card { background: #1f2937; color: #e5e7eb; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; }
+        .tel-card h4 { color: #10b981; margin: 0 0 5px 0; border-bottom: 1px solid #374151; }
+        
+        /* Indicador de Líder no Painel */
+        .leader-badge { background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="left-column">
+        <div class="card">
+            <h2>Novo Drone</h2>
+            <form id="create-form">
+                <input type="text" id="d-name" placeholder="Nome (ex: Alpha)" required>
+                <input type="text" id="d-model" placeholder="Modelo (ex: X1)" required>
+                <button type="submit">Adicionar</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Comandos Táticos</h2>
+            <div class="formation-grid">
+                <button class="btn-formation" onclick="sendFormation('LINE')">Formação Linha</button>
+                <button class="btn-formation" onclick="sendFormation('COLUMN')">Formação Coluna</button>
+                <button class="btn-formation" onclick="sendFormation('DIAGONAL')">Formação Diagonal</button>
+                <button class="btn-formation" onclick="sendFormation('V_SHAPE')">Formação V</button>
+                
+                <button class="btn-formation btn-rtl" onclick="sendFormation('BASE')">🏠 Retornar à Base</button>
+            </div>
+            <div style="font-size: 0.8rem; color: #666; margin-top: 15px; line-height: 1.4;">
+                <strong>Instruções:</strong><br>
+                • 1 Clique: Selecionar (Borda Preta)<br>
+                • 2 Cliques: Definir Líder (Círculo Vermelho)<br>
+                • Clique no Mapa: Move os Selecionados<br>
+                • Se 2+ Selecionados: Formam linha no clique.
+            </div>
+        </div>
+
+        <div class="card" style="flex-grow: 1;">
+            <h2>Alertas</h2>
+            <ul id="alert-list"><li>Sem alertas.</li></ul>
+        </div>
+    </div>
+
+    <div class="right-column">
+        <div class="card" style="flex-grow: 1; padding: 0;">
+            <div id="map-wrapper">
+                <canvas id="drone-map"></canvas>
+                <div class="map-overlay">
+                    <span id="leader-status">Líder: Automático (Menor ID)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="height: 250px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Frota & Telemetria</h2>
+                <span style="font-size: 0.8rem; color: #666;">Dados em Tempo Real</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; height: 100%; overflow: hidden;">
+                <ul id="drone-list" style="overflow-y: auto; border-right: 1px solid #eee; padding-right: 10px;"></ul>
+                <div id="telemetry-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // === CONFIGURAÇÃO ===
+    const API_BASE = "http://localhost:8080/api";
+    const EVENTS_URL = "http://localhost:8080/events";
+    const BASE = { lat: -22.9000, lng: -43.2000 };
+
+    // === ESTADO TÁTICO ===
+    const state = {
+        drones: new Map(),
+        telemetry: new Map(),
+        alerts: [],
+        map: { 
+            scale: 30000, offsetX: 0, offsetY: 0, 
+            dragging: false, startX: 0, startY: 0, 
+            // MULTISSELEÇÃO (Set)
+            selectedIds: new Set(), 
+            // LÍDER (Único)
+            leaderId: null 
+        }
+    };
+
+    const els = {
+        droneList: document.getElementById('drone-list'),
+        telContainer: document.getElementById('telemetry-container'),
+        alertList: document.getElementById('alert-list'),
+        canvas: document.getElementById('drone-map'),
+        form: document.getElementById('create-form'),
+        leaderStatus: document.getElementById('leader-status')
+    };
+    const ctx = els.canvas.getContext('2d');
+
+    // === DESENHO DO DRONE ===
+    function drawDroneIcon(ctx, x, y, color, isSelected, isLeader) {
+        const size = 14;
+        ctx.save();
+        ctx.translate(x, y);
+        
+        // LÍDER: Círculo Vermelho Externo
+        if (isLeader) {
+            ctx.beginPath();
+            ctx.arc(0, 0, size + 8, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#ef4444'; // Vermelho
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            // Label Líder
+            ctx.fillStyle = '#ef4444';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillText("LÍDER", -15, -size - 10);
+        }
+
+        // SELECIONADO: Quadrado Preto (estilo RTS)
+        if (isSelected) {
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-size - 4, -size - 4, (size * 2) + 8, (size * 2) + 8);
+        }
+
+        // Corpo do Drone (X)
+        ctx.beginPath();
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.moveTo(-size/2, -size/2); ctx.lineTo(size/2, size/2);
+        ctx.moveTo(size/2, -size/2); ctx.lineTo(-size/2, size/2);
+        ctx.stroke();
+
+        // Hélices
+        ctx.fillStyle = color;
+        const propSize = 4;
+        const offset = size/2;
+        [[-offset, -offset], [offset, -offset], [-offset, offset], [offset, offset]].forEach(([dx, dy]) => {
+            ctx.beginPath(); ctx.arc(dx, dy, propSize, 0, 2 * Math.PI);
+            ctx.fill(); ctx.stroke();
+        });
+
+        // Centro
+        ctx.beginPath(); ctx.arc(0, 0, 3, 0, 2 * Math.PI);
+        ctx.fillStyle = color; ctx.fill();
+
+        ctx.restore();
+    }
+
+    // === MAPA ===
+    function resizeMap() { els.canvas.width = els.canvas.parentElement.offsetWidth; els.canvas.height = els.canvas.parentElement.offsetHeight; drawMap(); }
+    window.addEventListener('resize', resizeMap);
+
+    function drawMap() {
+        const w = els.canvas.width; const h = els.canvas.height;
+        const cx = w / 2; const cy = h / 2;
+        ctx.clearRect(0, 0, w, h);
+
+        // Grid
+        ctx.strokeStyle = '#d1d5db'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke();
+        
+        // Atualiza Label de Status
+        if (state.map.leaderId) {
+            els.leaderStatus.textContent = `Líder Definido: Drone ${state.map.leaderId}`;
+            els.leaderStatus.style.color = "#ef4444";
+        } else {
+            els.leaderStatus.textContent = "Líder: Automático (Menor ID)";
+            els.leaderStatus.style.color = "#333";
+        }
+
+        if (state.drones.size === 0) {
+            ctx.fillStyle = '#9ca3af'; ctx.fillText("Nenhum drone na frota.", 20, 30); return;
+        }
+
+        state.drones.forEach((drone, id) => {
+            const tel = state.telemetry.get(id);
+            let lat = tel ? tel.lat : BASE.lat;
+            let lng = tel ? tel.lng : BASE.lng;
+
+            const x = (lng - BASE.lng) * state.map.scale + cx + state.map.offsetX;
+            const y = (BASE.lat - lat) * state.map.scale + cy + state.map.offsetY;
+
+            // Skip fora da tela
+            if (x < -50 || x > w + 50 || y < -50 || y > h + 50) return;
+
+            // Status
+            const hasEmergency = state.alerts.some(a => a.droneId == id && a.type === 'EMERGENCY_SIGNAL');
+            const isLowBat = tel && tel.battery < 20;
+            const isSelected = state.map.selectedIds.has(id); // Verifica no Set
+            const isLeader = state.map.leaderId == id;
+            
+            let color = '#3b82f6'; // Azul
+            if (!tel) color = '#9ca3af'; // Cinza
+            else if (hasEmergency) color = '#ef4444'; // Vermelho
+            else if (isLowBat) color = '#f59e0b'; // Amarelo
+
+            drawDroneIcon(ctx, x, y, color, isSelected, isLeader);
+
+            // Labels
+            ctx.fillStyle = '#1f2937'; ctx.font = 'bold 11px sans-serif';
+            ctx.fillText(`ID ${id}`, x + 12, y - 2);
+            if (tel) {
+                ctx.fillStyle = '#4b5563'; ctx.font = '10px sans-serif';
+                ctx.fillText(`${tel.battery}%`, x + 12, y + 10);
+            } else {
+                ctx.fillStyle = '#ef4444'; ctx.font = '9px sans-serif';
+                ctx.fillText(`OFFLINE`, x + 12, y + 10);
+            }
+        });
+    }
+
+    // --- CONTROLES DO MOUSE ---
+    
+    // Pan/Zoom (Mantidos iguais)
+    els.canvas.addEventListener('mousedown', e => { state.map.dragging = true; state.map.startX = e.clientX; state.map.startY = e.clientY; });
+    els.canvas.addEventListener('mousemove', e => { if (!state.map.dragging) return; state.map.offsetX += e.clientX - state.map.startX; state.map.offsetY += e.clientY - state.map.startY; state.map.startX = e.clientX; state.map.startY = e.clientY; drawMap(); });
+    els.canvas.addEventListener('mouseup', () => state.map.dragging = false);
+    els.canvas.addEventListener('wheel', e => { e.preventDefault(); const zoom = -e.deltaY * 0.001; const newScale = state.map.scale * (1 + zoom); if (newScale > 1000 && newScale < 500000) { state.map.scale = newScale; drawMap(); } });
+
+    // --- LÓGICA DE SELEÇÃO E LÍDER ---
+
+    // 1. Duplo Clique: Define Líder
+    els.canvas.addEventListener('dblclick', e => {
+        const clickedId = getClickedDroneId(e);
+        if (clickedId) {
+            // Se clicar no líder atual, desmarca
+            state.map.leaderId = (state.map.leaderId == clickedId) ? null : clickedId;
+            drawMap();
+        }
+    });
+
+    // 2. Clique Simples: Seleção ou Movimento
+    els.canvas.addEventListener('click', e => {
+        if (state.map.dragging) return;
+
+        const clickedId = getClickedDroneId(e);
+
+        if (clickedId) {
+            // Lógica de Seleção (Toggle)
+            if (state.map.selectedIds.has(clickedId)) {
+                state.map.selectedIds.delete(clickedId);
+            } else {
+                state.map.selectedIds.add(clickedId);
+            }
+            drawMap();
+        } else {
+            // Clicou no vazio -> Lógica de Movimento
+            handleMapMoveClick(e);
+        }
+    });
+
+    // Helper: Identifica drone clicado
+    function getClickedDroneId(e) {
+        const rect = els.canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left; const my = e.clientY - rect.top;
+        const cx = els.canvas.width / 2; const cy = els.canvas.height / 2;
+        let foundId = null;
+
+        state.drones.forEach((drone, id) => {
+            const tel = state.telemetry.get(id);
+            if (!tel) return; // Ignora inativos para clique
+            const x = (tel.lng - BASE.lng) * state.map.scale + cx + state.map.offsetX;
+            const y = (BASE.lat - tel.lat) * state.map.scale + cy + state.map.offsetY;
+            if (Math.sqrt((mx - x)**2 + (my - y)**2) < 20) foundId = id;
+        });
+        return foundId;
+    }
+
+    // Helper: Lógica de Mover Grupo
+    function handleMapMoveClick(e) {
+        if (state.map.selectedIds.size === 0) return;
+
+        const count = state.map.selectedIds.size;
+        const msg = count === 1 
+            ? `Mover Drone ${[...state.map.selectedIds][0]}?` 
+            : `Mover grupo de ${count} drones para este ponto (Formação Linha)?`;
+
+        if (confirm(msg)) {
+            const rect = els.canvas.getBoundingClientRect();
+            const cx = els.canvas.width / 2; const cy = els.canvas.height / 2;
+            
+            // Ponto central clicado (Lat/Lng)
+            const clickLng = ((e.clientX - rect.left - cx - state.map.offsetX) / state.map.scale) + BASE.lng;
+            const clickLat = BASE.lat - ((e.clientY - rect.top - cy - state.map.offsetY) / state.map.scale);
+
+            // Converte Set para Array e Ordena (para manter coerência na formação)
+            const sortedIds = Array.from(state.map.selectedIds).sort((a, b) => a - b);
+            
+            // Configuração da Linha Ad-Hoc
+            const SPACING = 0.0020;
+            // O drone do meio (índice) fica no ponto clicado
+            const centerIndex = (count - 1) / 2; 
+
+            sortedIds.forEach((id, index) => {
+                const offset = (index - centerIndex) * SPACING;
+                const targetLng = clickLng + offset;
+                const targetLat = clickLat; // Mesma latitude (Linha horizontal)
+
+                sendMoveCommand(id, targetLat, targetLng);
+            });
+        }
+    }
+
+    // === COMANDOS DE FORMAÇÃO (PRE-SET) ===
+    window.sendFormation = async (type) => {
+        try {
+            // Envia o leaderId se estiver definido
+            const payload = { type: type };
+            if (state.map.leaderId) {
+                payload.leaderId = state.map.leaderId;
+                console.log("Enviando formação com líder explícito:", state.map.leaderId);
+            }
+            await fetch(`${API_BASE}/formations`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        } catch(e) { console.error(e); }
+    };
+
+    // ... (Resto das funções: renderUI, sendMoveCommand, deleteDrone, resumeDrone, API calls... IGUAIS AO ANTERIOR) ...
+    // Vou resumir as funções repetitivas para caber aqui, mas elas são idênticas ao script anterior.
+    
+    async function sendMoveCommand(id, lat, lng) { await fetch(`${API_BASE}/drones/${id}/command`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ command: "GO_TO_POSITION", lat, lng }) }); }
+    window.deleteDrone = async (id) => { if(confirm('Deletar?')) { state.map.selectedIds.delete(id); if(state.map.leaderId == id) state.map.leaderId = null; await fetch(`${API_BASE}/drones/${id}`, { method: 'DELETE' }); }};
+    window.resumeDrone = async (id, timestamp) => { await fetch(`${API_BASE}/drones/${id}/command`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ command: "CONTINUE" }) }); state.alerts = state.alerts.filter(a => a.timestamp != timestamp); renderUI(); };
+    els.form.addEventListener('submit', async e => { 
+    e.preventDefault(); 
+    const name = document.getElementById('d-name').value; 
+    const model = document.getElementById('d-model').value; 
+    
+    await fetch(`${API_BASE}/drones`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ name: name, model: model, active: true }) 
+    }); 
+    
+    els.form.reset(); 
+});
+
+    function renderUI() {
+        // Lista de Drones
+        els.droneList.innerHTML = '';
+        state.drones.forEach(d => {
+            const activeClass = d.active ? 'color:#10b981' : 'color:#9ca3af';
+            const li = document.createElement('li'); 
+            li.className = 'drone-item';
+            
+            // --- MUDANÇA 1: Cursor pointer para indicar clique ---
+            li.style.cursor = 'pointer';
+            
+            // --- MUDANÇA 2: Evento de clique no item inteiro ---
+            li.onclick = () => focusOnDrone(d.id);
+
+            li.innerHTML = `
+                <div>
+                    <strong>${d.name}</strong> <small>(ID: ${d.id})</small><br>
+                    <span style="font-size:0.8rem; ${activeClass}">● ${d.active ? 'Ativo' : 'Inativo'}</span>
+                </div>
+                <button class="btn-delete" onclick="event.stopPropagation(); deleteDrone(${d.id})">🗑️</button>
+            `;
+            els.droneList.appendChild(li);
+        });
+        els.telContainer.innerHTML = '';
+        state.telemetry.forEach(t => {
+            const div = document.createElement('div'); div.className = 'tel-card';
+            div.innerHTML = `<h4>Drone ${t.droneId}</h4>Lat: ${t.lat.toFixed(5)}<br>Lng: ${t.lng.toFixed(5)}<br>Alt: ${t.altitude.toFixed(1)}m<br>Bat: ${t.battery}%`;
+            els.telContainer.appendChild(div);
+        });
+        els.alertList.innerHTML = '';
+        if (state.alerts.length === 0) els.alertList.innerHTML = '<li>Sem alertas.</li>';
+        state.alerts.slice().reverse().forEach(a => {
+            const li = document.createElement('li'); li.className = 'alert-item'; li.setAttribute('data-type', a.type);
+            let btn = a.type === 'EMERGENCY_SIGNAL' ? `<button class="btn-resume" onclick="resumeDrone(${a.droneId}, '${a.timestamp}')">Continuar Missão</button>` : '';
+            li.innerHTML = `<strong>Drone ${a.droneId}: ${a.type}</strong><br>${a.message}${btn}`;
+            els.alertList.appendChild(li);
+        });
+        drawMap();
+    }
+
+    // === NOVA FUNÇÃO: FOCAR NO DRONE ===
+    window.focusOnDrone = (id) => {
+        const tel = state.telemetry.get(id);
+        
+        if (!tel) {
+            alert(`O Drone ${id} ainda não enviou sinal de GPS.`);
+            return;
+        }
+
+        // 1. Define o drone como selecionado (para ficar com borda preta/vermelha)
+        state.map.selectedId = id;
+
+        // 2. Matemática de Centralização
+        // Queremos que a posição do drone seja (0,0) relativo ao centro
+        // A fórmula de desenho é: x = (lng - BASE) * scale + center + offset
+        // Para x ser o centro, offset deve anular a diferença geográfica:
+        // offset = -((lng - BASE) * scale)
+        
+        state.map.offsetX = -((tel.lng - BASE.lng) * state.map.scale);
+        state.map.offsetY = -((BASE.lat - tel.lat) * state.map.scale);
+
+        // 3. Redesenha o mapa com o novo foco
+        drawMap();
+    };
+
+    async function init() {
+        const dRes = await fetch(`${API_BASE}/drones`); (await dRes.json()).forEach(d => state.drones.set(d.id, d));
+        const tRes = await fetch(`${API_BASE}/telemetry/latest`); (await tRes.json()).forEach(t => state.telemetry.set(t.droneId, t));
+        const aRes = await fetch(`${API_BASE}/alerts`); state.alerts = await aRes.json();
+        renderUI(); resizeMap();
+        const evt = new EventSource(EVENTS_URL);
+        evt.onmessage = e => {
+            const w = JSON.parse(e.data);
+            switch(w.type) {
+                case 'DRONE_CREATED': case 'DRONE_UPDATED': state.drones.set(w.data.id, w.data); renderUI(); break;
+                case 'DRONE_DELETED': state.drones.delete(w.data.id); state.telemetry.delete(w.data.id); renderUI(); break;
+                case 'TELEMETRY_UPDATED': state.telemetry.set(w.data.droneId, w.data); renderUI(); break;
+                case 'ALERT_CREATED': state.alerts.push(w.data); renderUI(); break;
+            }
+        };
+    }
+    init();
+</script>
+</body>
+</html>

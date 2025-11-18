@@ -1,0 +1,11 @@
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\config\RabbitMQConfig.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\DroneSimulatorApplication.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\events\EventPublisher.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\events\InternalEventBus.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\events\InternalEventPublisher.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\events\RabbitEventPublisher.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\model\Alert.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\model\Drone.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\model\DroneTelemetry.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\service\SimulationService.java
+C:\Users\anony\OneDrive\Área de Trabalho\AprendendoBackend\dronesimulator\src\main\java\com\skycontrol\dronebackend\simulator\SimulatedDrone.java
