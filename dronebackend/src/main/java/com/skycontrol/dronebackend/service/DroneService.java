@@ -8,12 +8,16 @@ import java.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skycontrol.dronebackend.config.RabbitMQConfig;
 import com.skycontrol.dronebackend.database.JsonDatabaseService;
+import com.skycontrol.dronebackend.events.EventPublisher;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class DroneService {
+
+    @Autowired 
+    private EventPublisher eventPublisher;
 
     @Autowired 
     private RabbitTemplate rabbitTemplate;
@@ -70,7 +74,12 @@ public class DroneService {
         drones.add(drone);
         
         db.save(drones);
-        publishDroneEvent("DRONE_CREATED", drone); // Comunica ao simulador externo
+        
+        // --- 1. PUBLICAÇÃO INTERNA (ATUALIZA O FRONTEND IMEDIATAMENTE) ---
+        eventPublisher.publish("DRONE_CREATED", drone); 
+        
+        // --- 2. PUBLICAÇÃO EXTERNA (INICIA A THREAD NO SIMULADOR) ---
+        publishDroneEvent("DRONE_CREATED", drone); 
 
         return drone;
     }
@@ -96,6 +105,7 @@ public class DroneService {
         db.archiveTelemetry(id); //
 
         // 4. Notifica o sistema
+        eventPublisher.publish("DRONE_DELETED", drone); 
         publishDroneEvent("DRONE_DELETED", drone);
 
         return true;

@@ -39,6 +39,7 @@ public class CommandListener {
                 System.err.println("[CommandListener] Comando inválido recebido: " + commandJson);
                 return;
             }
+            
 
             // 2. Encaminha o comando para o SimulationService
             if (command.equals("GO_TO_POSITION")) {
@@ -51,7 +52,10 @@ public class CommandListener {
                     simulationService.setDroneTarget(droneId, lat, lng);
                 }
             }
-            // (Futuramente, "SET_FORMATION" iria aqui)
+            else if (command.equals("CONTINUE")) {
+                simulationService.resumeSimulation(droneId);
+                System.out.println("[CommandListener] Drone " + droneId + " RESUMIDO por comando externo.");
+            }
 
         } catch (Exception e) {
             System.err.println("[CommandListener] Erro ao processar comando: " + e.getMessage());

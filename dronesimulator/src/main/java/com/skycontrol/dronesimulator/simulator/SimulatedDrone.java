@@ -136,8 +136,8 @@ public class SimulatedDrone implements Runnable {
     }
 
     private void checkEmergencyAlert() throws Exception {
-        // Chance de 1 em 1000 (0,1%)
-        if (rand.nextInt(1000) == 1) {
+        // Chance de 1 em 500 (0,2%)
+        if (rand.nextInt(500) == 1) {
             System.out.println("!!! [SimulatedDrone " + drone.getId() + "] ALERTA DE EMERGÊNCIA DETECTADO !!!");
             
             Alert alert = new Alert(
